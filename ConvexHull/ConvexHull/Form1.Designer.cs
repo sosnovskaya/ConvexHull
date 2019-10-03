@@ -41,6 +41,7 @@
             this.pictureBox1.Size = new System.Drawing.Size(1007, 559);
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
+            this.pictureBox1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseClick);
             // 
             // clearBtn
             // 
@@ -71,7 +72,7 @@
             this.Controls.Add(this.clearBtn);
             this.Controls.Add(this.pictureBox1);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "Построение выпуклой оболочки рекурсивным методом объединения оболочек";
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
 
