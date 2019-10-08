@@ -58,6 +58,7 @@ namespace ConvexHull
 
         List<Point>  DivivdeAndConguer(List<Point> points)
         {
+            points = points.OrderBy(p => p.X).ToList();//сортируем по X,чтобы левая оболочка была слева,а првая справа
             int n = points.Count;
             if (n <= 5)
                 return BruteHull(points);
@@ -120,60 +121,75 @@ namespace ConvexHull
                     leftmostRight = i;
             g.FillEllipse(brushRed, righthull[leftmostRight].X, righthull[leftmostRight].Y - 3, 7, 7);
 
-            // 
-            int lowerLeft = rihtmostLeft, lowerRight = leftmostRight;
-            bool tangentIsFinded = false;
-            while (!tangentIsFinded)
+            // finding the upper tangent 
+            int inda = leftmostRight, indb = rihtmostLeft;
+            bool done = false;
+            while (!done)
             {
-                tangentIsFinded = true;
-                while (findPointPos(lefthull[(lowerLeft + 1) % n1], righthull[lowerRight], lefthull[lowerLeft]) <= 0)
-                    lowerLeft = (lowerLeft + 1) % n1;
+                done = true;
+                while (orientation(righthull[indb], lefthull[inda], lefthull[(inda + 1) % n1]) >= 0)
+                    inda = (inda + 1) % n1;
 
-                while (findPointPos(righthull[(n2 + lowerRight - 1) % n2], lefthull[lowerLeft],righthull[lowerRight]) >= 0)
+                while (orientation(lefthull[inda], righthull[indb], righthull[(n2 + indb - 1) % n2]) <= 0)
                 {
-                    lowerRight = (n2 + lowerRight - 1) % n2;
-                    tangentIsFinded = false;
+                    indb = (n2 + indb - 1) % n2;
+                    done = false;
                 }
             }
-            g.DrawLine(penProcess, lefthull[lowerLeft], righthull[lowerRight]);
+
+            int uppera = inda, upperb = indb;
+            g.DrawLine(penProcess, lefthull[uppera], righthull[upperb]);
             pictureBox1.Invalidate();
             pictureBox1.Refresh();
             System.Threading.Thread.Sleep(1000);
 
-            tangentIsFinded = false;
-            int upperLeft = rihtmostLeft, upperRight = leftmostRight;
-            while (!tangentIsFinded)
+            inda = leftmostRight; indb = rihtmostLeft;
+            done = false;
+            while (!done)//finding the lower tangent 
             {
-                tangentIsFinded = true;
-                while (findPointPos(lefthull[(n1 + upperLeft - 1) % n1],righthull[upperRight],lefthull[upperLeft]) >= 0)
-                    upperLeft = (n1 + upperLeft - 1) % n1;
+                done = true;
+                while (orientation(lefthull[inda], righthull[indb], righthull[(indb + 1) % n2]) >= 0)
+                    indb = (indb + 1) % n2;
 
-                while(findPointPos(righthull[(upperRight + 1) % n2],lefthull[upperLeft], righthull[upperRight]) <= 0)
+                while (orientation(righthull[indb], lefthull[inda], lefthull[(n1 + inda - 1) % n1]) <= 0)
                 {
-                    upperRight = (upperRight + 1) % n2;
-                    tangentIsFinded = false;
+                    inda = (n1 + inda - 1) % n1;
+                    done = false;
                 }
             }
-            g.DrawLine(penProcess, lefthull[upperLeft], righthull[upperRight]);
+            int lowera = inda, lowerb = indb;
+            g.DrawLine(penProcess, lefthull[lowera], righthull[lowerb]);
             pictureBox1.Invalidate();
             pictureBox1.Refresh();
             System.Threading.Thread.Sleep(1000);
 
-            int ind = lowerRight;
-            ConvexHull.Add(righthull[ind]);
-            while(ind != upperRight)
+            int ind = uppera;
+            ConvexHull.Add(lefthull[uppera]);
+            while (ind != lowera)
             {
-                ind = (1 + ind) % n2;
-                ConvexHull.Add(righthull[ind]);
-            }
-            ind = upperLeft;
-            ConvexHull.Add(lefthull[ind]);
-            while (ind != lowerLeft)
-            {
-                ind = (n1 + ind - 1) % n1;
+                ind = (ind + 1) % n1;
                 ConvexHull.Add(lefthull[ind]);
             }
+            ind = lowerb;
+            ConvexHull.Add(righthull[lowerb]);
+            while (ind != upperb)
+            {
+                ind = (ind + 1) % n2;
+                ConvexHull.Add(righthull[ind]);
+            }
+
             return ConvexHull;
+        }
+
+        // Checks whether the line is crossing the polygon 
+        int orientation(Point a, Point b, Point c)
+        {
+            int res = (b.Y - a.Y) * (c.X - b.X) - (c.Y - b.Y) * (b.X - a.X);
+            if (res == 0)
+                return 0;
+            if (res > 0)
+                return 1;
+            return -1;
         }
 
         //алгоритм построения оболочки для малого количества точек
@@ -297,7 +313,7 @@ namespace ConvexHull
         }
 
     }
-
+    /*
     public class ClockwiseComparer : IComparer
     {
         public int Compare(object x, object y)
@@ -308,4 +324,5 @@ namespace ConvexHull
             return Math.Atan2(point1.Y, point1.X).CompareTo(Math.Atan2(point2.Y, point2.X));
         }
     }
+    */
 }
