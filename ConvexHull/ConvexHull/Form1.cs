@@ -15,6 +15,7 @@ namespace ConvexHull
     {
         private List<Point> points = new List<Point>();
         private SolidBrush brushRed = new SolidBrush(Color.Red);
+        private SolidBrush brushBlack = new SolidBrush(Color.Black);
         private SolidBrush brushRight = new SolidBrush(Color.Green);//вершины правой кучи
         private SolidBrush brushLeft = new SolidBrush(Color.Yellow);//вершины левой кучи
         private Pen penResult = new Pen(Color.Black, 1);
@@ -57,7 +58,6 @@ namespace ConvexHull
 
         List<Point>  DivivdeAndConguer(List<Point> points)
         {
-            points = points.OrderBy(p => p.X).ToList();
             int n = points.Count;
             if (n <= 5)
                 return BruteHull(points);
@@ -159,69 +159,21 @@ namespace ConvexHull
             pictureBox1.Refresh();
             System.Threading.Thread.Sleep(1000);
 
-            /*
-            
-            // finding the upper tangent 
-            int upperLeft = rihtmostLeft, upperRight = leftmostRight;
-            bool done = false;
-            while (!done)
+            int ind = lowerRight;
+            ConvexHull.Add(righthull[ind]);
+            while(ind != upperRight)
             {
-                done = true;
-                while (orientation(righthull[upperRight], lefthull[upperLeft],lefthull[(upperLeft + 1) % n1]) >= 0)
-                    upperLeft = (upperLeft + 1) % n1;
-
-                while (orientation(lefthull[upperLeft], righthull[upperRight], righthull[(n2 + upperRight - 1) % n2]) <= 0)
-                {
-                    upperRight = (n2 + upperRight - 1) % n2;
-                    done = false;
-                }
-            }
-            int uppera = upperLeft, upperb = upperRight;
-            g.DrawLine(penProcess, lefthull[upperLeft], righthull[upperRight]);
-            pictureBox1.Invalidate();
-            pictureBox1.Refresh();
-            System.Threading.Thread.Sleep(1000);
-
-            upperLeft = rihtmostLeft; upperRight = leftmostRight;
-            done = false;
-            while (!done)//finding the lower tangent 
-            {
-                done = true;
-                while (orientation(lefthull[upperLeft], righthull[upperRight], righthull[(upperRight + 1) % n2]) >= 0)
-                    upperRight = (upperRight + 1) % n2;
-
-                while (orientation(righthull[upperRight], lefthull[upperLeft], lefthull[(n1 + upperLeft - 1) % n1]) <= 0)
-                {
-                    upperLeft = (n1 + upperLeft - 1) % n1;
-                    done = false;
-                }
-            }
-            g.DrawLine(penProcess, lefthull[upperLeft], righthull[upperRight]);
-            pictureBox1.Invalidate();
-            pictureBox1.Refresh();
-            System.Threading.Thread.Sleep(1000);
-
-            int lowera = upperLeft, lowerb = upperRight;
-            //ret contains the convex hull after merging the two convex hulls 
-            //with the points sorted in anti-clockwise order 
-            int ind = uppera;
-            ConvexHull.Add(lefthull[uppera]);
-            while (ind != lowera)
-            {
-                ind = (ind + 1) % n1;
-                ConvexHull.Add(lefthull[ind]);
-            }
-
-            ind = lowerb;
-            ConvexHull.Add(righthull[lowerb]);
-            while (ind != upperb)
-            {
-                ind = (ind + 1) % n2;
+                ind = (1 + ind) % n2;
                 ConvexHull.Add(righthull[ind]);
             }
-            */
-
-            return lefthull;
+            ind = upperLeft;
+            ConvexHull.Add(lefthull[ind]);
+            while (ind != lowerLeft)
+            {
+                ind = (n1 + ind - 1) % n1;
+                ConvexHull.Add(lefthull[ind]);
+            }
+            return ConvexHull;
         }
 
         //алгоритм построения оболочки для малого количества точек
@@ -260,20 +212,72 @@ namespace ConvexHull
                 }
             }
             vertices = vertices.Distinct().ToList();//убираем повторяющие точки в списке
-            vertices = vertices.OrderBy(p => Math.Atan2(p.X, p.Y)).ToList();//упорядочиваем против часовой
+            vertices = SortAnticlockwise(vertices);//сортирует точки против часовой стрелки
+           // vertices = vertices.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
+            //Point[] array = vertices.ToArray();
+            //Array.Sort(array, new ClockwiseComparer());
+            //vertices = array.ToList();
+            //double[] angles = new double[array.Length];
+            //for (int i = 0; i < array.Length; i++)
+                //angles[i] = Math.Atan2(array[i].Y, array[i].X);
+            //Array.Sort(angles, array);
+            //vertices = vertices.OrderBy(p => Math.Atan2(p.X, p.Y)).ToList();//упорядочиваем по часовой
             return vertices;
         }
 
-
-        // Checks whether the line is crossing the polygon 
-        int orientation(Point a, Point b, Point c)
+        List<Point> SortAnticlockwise(List<Point> points)
         {
-            int res = (b.Y - a.Y) * (c.X - b.X) - (c.Y - b.Y) * (b.X - a.X);
-            if (res == 0)
-                return 0;
-            if (res > 0)
-                return 1;
-            return -1;
+            Point center = new Point(0,0);
+            int n = points.Count;
+            for(int i = 0;i < n; i++)
+            {
+                center.X += points[i].X;
+                center.Y += points[i].Y;
+            }
+            center.X /= n;
+            center.Y /= n;
+            for(int i = 0;i < n; i++)
+            {
+                for(int j = 0; j < n; j++)
+                {
+                    if (j == i)
+                        continue;
+                    if (Less(points[i],points[j],center))
+                    {
+                        var temp = points[i];
+                        points[i] = points[j];
+                        points[j] = temp;
+                    }
+                }
+            }
+            return points;
+        }
+
+        bool Less(Point a,Point b,Point center)
+        {
+            if (a.X - center.X >= 0 && b.X - center.X < 0)
+                return true;
+            if (a.X - center.X < 0 && b.X - center.X >= 0)
+                return false;
+            if (a.X - center.X == 0 && b.X - center.X == 0)
+            {
+                if (a.Y - center.Y >= 0 || b.Y - center.Y >= 0)
+                    return a.Y > b.Y;
+                return b.Y > a.Y;
+            }
+
+            // compute the cross product of vectors (center -> a) x (center -> b)
+            int det = (a.X - center.X) * (b.Y - center.Y) - (b.X - center.X) * (a.Y - center.Y);
+            if (det < 0)
+                return true;
+            if (det > 0)
+                return false;
+
+            // points a and b are on the same line from the center
+            // check which point is closer to the center
+            int d1 = (a.X - center.X) * (a.X - center.X) + (a.Y - center.Y) * (a.Y - center.Y);
+            int d2 = (b.X - center.X) * (b.X - center.X) + (b.Y - center.Y) * (b.Y - center.Y);
+            return d1 > d2;
         }
 
         //Положение точки относительно прямой
@@ -294,4 +298,14 @@ namespace ConvexHull
 
     }
 
+    public class ClockwiseComparer : IComparer
+    {
+        public int Compare(object x, object y)
+        {
+            var point1 = (Point)x;
+            var point2 = (Point)y;
+
+            return Math.Atan2(point1.Y, point1.X).CompareTo(Math.Atan2(point2.Y, point2.X));
+        }
+    }
 }
