@@ -167,16 +167,17 @@ namespace ConvexHull
             ConvexHull.Add(lefthull[uppera]);
             while (ind != lowera)
             {
-                ind = (ind + 1) % n1;
+                ind = (n1 + ind - 1) % n1;
                 ConvexHull.Add(lefthull[ind]);
             }
             ind = lowerb;
             ConvexHull.Add(righthull[lowerb]);
             while (ind != upperb)
             {
-                ind = (ind + 1) % n2;
+                ind = (n2 + ind - 1) % n2;
                 ConvexHull.Add(righthull[ind]);
             }
+            ConvexHull = SortAnticlockwise(ConvexHull);
 
             return ConvexHull;
         }
